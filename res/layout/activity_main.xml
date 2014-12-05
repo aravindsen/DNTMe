@@ -14,12 +14,12 @@
         android:layout_marginTop="50dp" />
 
     <Button
-        android:id="@+id/buttonreload"
+        android:id="@+id/buttonreload1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:text="Refreshmap1" 
+        android:text="Show mocked location" 
        />
     
     <Button
@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:text="Refreshmap2" />
+        android:text="Notify" />
 
 </RelativeLayout>
 
