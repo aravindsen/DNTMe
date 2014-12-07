@@ -3,6 +3,7 @@ package com.example.dntmoi;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.Math;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -36,6 +38,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -56,13 +59,16 @@ public class MainActivity extends FragmentActivity implements
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	LocationManager lm;
 
+	double ratio = 0.0002645833333333 * 13;
 	// HOME
 	Double lati2 = 40.764746, longi2 = -111.857907;
 	Float rad2 = (float) 1000.0;
+	double rad2inkms = rad2/1000;//0.0002645833333333;// rad2*ratio;
 
 	// COLLEGE
 	Double lati1 = 40.767599, longi1 = -111.843995;
 	Float rad1 = (float) 1000.0;
+	double rad1inkms = rad1 * ratio;
 
 	ConnectionResult connectionResult;
 
@@ -208,7 +214,7 @@ public class MainActivity extends FragmentActivity implements
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-//				map.clear();
+				// map.clear();
 				Location loc = mLocationClient.getLastLocation();
 				ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
 				map.addMarker(new MarkerOptions().position(ltlng).title(
@@ -266,22 +272,100 @@ public class MainActivity extends FragmentActivity implements
 		mNotifyMgr.notify(mNotificationId, mBuilder.build());
 	}
 
+	private float getBearing(double latitude, double longitude) {
+		// Get the current location
+		Location startingLocation = new Location("starting point");
+		startingLocation.setLatitude(map.getCameraPosition().target.latitude);
+		startingLocation.setLongitude(map.getCameraPosition().target.longitude);
+
+		// Get the target location
+		Location endingLocation = new Location("ending point");
+		endingLocation.setLatitude(latitude);
+		endingLocation.setLongitude(longitude);
+
+		// Find the Bearing from current location to next location
+		float targetBearing = startingLocation.bearingTo(endingLocation);
+		return targetBearing;
+	}
+
+	public static ProjectionPoint.Point FindPointAtDistanceFrom(
+			ProjectionPoint.Point startPoint, double initialBearingRadians,
+			double distanceKilometres) {
+		double radiusEarthKilometres = 6371.01;
+		double distRatio = distanceKilometres / radiusEarthKilometres;
+		double distRatioSine = Math.sin(distRatio);
+		double distRatioCosine = Math.cos(distRatio);
+
+		double startLatRad = DegreesToRadians(startPoint.getLat());
+		double startLonRad = DegreesToRadians(startPoint.getLong());
+
+		double startLatCos = Math.cos(startLatRad);
+		double startLatSin = Math.sin(startLatRad);
+
+		double endLatRads = Math.asin((startLatSin * distRatioCosine)
+				+ (startLatCos * distRatioSine * Math
+						.cos(initialBearingRadians)));
+
+		double endLonRads = startLonRad
+				+ Math.atan2(Math.sin(initialBearingRadians) * distRatioSine
+						* startLatCos,
+						distRatioCosine - startLatSin * Math.sin(endLatRads));
+
+		return new ProjectionPoint.Point(RadiansToDegrees(endLatRads),
+				RadiansToDegrees(endLonRads));
+	}
+
+	public static double DegreesToRadians(double degrees) {
+		double degToRadFactor = Math.PI / 180;
+		return degrees * degToRadFactor;
+	}
+
+	public static double RadiansToDegrees(double radians) {
+		double radToDegFactor = 180 / Math.PI;
+		return radians * radToDegFactor;
+	}
+
 	public void MockingJay() {
+		DecimalFormat df = new DecimalFormat("#.00");
+
 		Location loc = mLocationClient.getLastLocation();
-		ProjectionPoint.Point originallocation = new ProjectionPoint.Point(
-				loc.getLatitude(), loc.getLongitude());
-		ProjectionPoint p = new ProjectionPoint();
-		ProjectionPoint.Point center = new ProjectionPoint.Point(lati2, longi2);
-		ProjectionPoint.Point newloc = p.getCircleProjectedPointIntersection(originallocation, center, rad2);
+		double latgot = loc.getLatitude(), longot = loc.getLongitude();
+		ProjectionPoint.Point centerlocation = new ProjectionPoint.Point(lati2, longi2);
+
+		/*
+		 * Projection proj=map.getProjection(); ProjectionPoint p = new
+		 * ProjectionPoint();
+		 * 
+		 * Point centerpos=proj.toScreenLocation(new LatLng(lati2, longi2));
+		 * 
+		 * 
+		 * //GET GOOGLE MAP PROJECTION FOR LAT LONG
+		 * 
+		 * Point geopos=proj.toScreenLocation(new LatLng(latgot,longot));
+		 * ProjectionPoint.Point originallocation=new
+		 * ProjectionPoint.Point(geopos.x,geopos.y);
+		 * 
+		 * ProjectionPoint.Point newloc =
+		 * p.getCircleProjectedPointIntersection(originallocation,
+		 * centerlocation, rad2inpixels);
+		 */
+		ProjectionPoint.Point newloc = FindPointAtDistanceFrom(centerlocation,
+				getBearing(latgot, longot), rad2inkms);
+
 		mLocationClient.setMockMode(true);
 
 		Location newLocation = new Location(MainActivity.PROVIDER);
 		// double latitude = 21, longitude = 78;
-		float accuracy = 3.0f;
 		// newLocation.setLatitude(latitude);
 		// newLocation.setLongitude(longitude);
+		float accuracy = 3.0f;
+		/*
+		 * LatLng newlatlng= proj.fromScreenLocation(new
+		 * Point((int)newloc.getLat(),(int)newloc.getLong()));
+		 */
 		newLocation.setLatitude(newloc.getLat());
 		newLocation.setLongitude(newloc.getLong());
+
 		newLocation.setAccuracy(accuracy);
 		newLocation.setTime(System.currentTimeMillis());
 
@@ -291,12 +375,12 @@ public class MainActivity extends FragmentActivity implements
 					.elapsedRealtimeNanos());
 		}
 		mLocationClient.setMockLocation(newLocation);
-		
+
 		alertBox("Mocked !!");
-		
-		showCurrentLoc();
+
+		showCurrentLoc("Before:" + df.format(latgot) + "," + df.format(longot));
 	}
-	
+
 	// MOCK FUNCTIONS
 	@Override
 	public void onConnectionFailed(ConnectionResult arg0) {
@@ -319,18 +403,20 @@ public class MainActivity extends FragmentActivity implements
 		// Get back the mutable Circle
 		Circle circle = map.addCircle(circleOptions);
 
-		showCurrentLoc();
+		showCurrentLoc("Start:");
 	}
 
-	public void showCurrentLoc() {
+	public void showCurrentLoc(String text) {
+		DecimalFormat df = new DecimalFormat("#.00");
+
 		Location loc = mLocationClient.getLastLocation();
-		ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
-		map.addMarker(new MarkerOptions().position(ltlng).title("You"));
+		double latgot = loc.getLatitude(), longot = loc.getLongitude();
+		ltlng = new LatLng(latgot, longot);
+		map.addMarker(new MarkerOptions().position(ltlng).title(
+				text + "Now:" + df.format(latgot) + "." + df.format(longot)));
 
 		map.moveCamera(CameraUpdateFactory.newLatLng(ltlng));
 	}
-
-
 
 	@Override
 	public void onDisconnected() {
@@ -494,9 +580,9 @@ public class MainActivity extends FragmentActivity implements
 
 					// Restart the process of adding the current geofences
 					mGeofenceRequester.addGeofences(mCurrentGeofences);
-					
+
 					// If the request was to remove geofences
-					
+
 				} else if (GeofenceUtils.REQUEST_TYPE.REMOVE == mRequestType) {
 
 					// Toggle the removal flag and send a new removal request
@@ -575,7 +661,7 @@ public class MainActivity extends FragmentActivity implements
 					GeofenceUtils.ACTION_GEOFENCE_TRANSITION)) {
 
 				handleGeofenceTransition(context, intent);
-				
+
 				// The Intent contained an invalid action
 			} else {
 				Log.e(GeofenceUtils.APPTAG,
@@ -612,12 +698,12 @@ public class MainActivity extends FragmentActivity implements
 			 * code here. The current design of the app uses a notification to
 			 * inform the user that a transition has occurred.
 			 */
-			 int transition = mLocationClient.getGeofenceTransition(intent);
-//			 if (transition == Geofence.GEOFENCE_TRANSITION_ENTER)
-				 MockingJay();
-				 alertBox(""+transition);
-//			 else
-//				 mLocationClient.setMockMode(false);
+			int transition = mLocationClient.getGeofenceTransition(intent);
+			// if (transition == Geofence.GEOFENCE_TRANSITION_ENTER)
+			MockingJay();
+			alertBox("" + transition);
+			// else
+			// mLocationClient.setMockMode(false);
 		}
 
 		/**
