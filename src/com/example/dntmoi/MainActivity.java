@@ -3,7 +3,7 @@ package com.example.dntmoi;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import com.example.dntmoi.*;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -29,17 +29,18 @@ import android.widget.Toast;
 import com.example.dntmoi.GeofenceUtils.REMOVE_TYPE;
 import com.example.dntmoi.GeofenceUtils.REQUEST_TYPE;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.ErrorDialogFragment;
 import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MainActivity extends FragmentActivity implements
@@ -207,11 +208,11 @@ public class MainActivity extends FragmentActivity implements
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				map.clear();
+//				map.clear();
 				Location loc = mLocationClient.getLastLocation();
 				ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
 				map.addMarker(new MarkerOptions().position(ltlng).title(
-						"Hello world1:"));
+						"Present location"));
 			}
 
 		});
@@ -220,7 +221,7 @@ public class MainActivity extends FragmentActivity implements
 
 			@Override
 			public void onClick(View v) {
-				notification();
+				MockingJay();
 			}
 
 		});
@@ -259,43 +260,10 @@ public class MainActivity extends FragmentActivity implements
 		int mNotificationId = 1;
 		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
 				this).setSmallIcon(R.drawable.ic_launcher)
-				.setContentTitle("My notification")
-				.setContentText("Hello World!");
+				.setContentTitle("Mocked")
+				.setContentText("Original Location mocked!");
 		NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		mNotifyMgr.notify(mNotificationId, mBuilder.build());
-		MockingJay();
-	}
-
-	// MOCK FUNCTIONS
-	@Override
-	public void onConnectionFailed(ConnectionResult arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onConnected(Bundle arg0) {
-		// TODO Auto-generated method stub
-		mLocationClient.setMockMode(false);
-		// MockingJay();
-
-		onRegisterClicked();
-
-		// Instantiates a new CircleOptions object and defines the center and
-		// radius
-		CircleOptions circleOptions = new CircleOptions().center(
-				new LatLng(lati2, longi2)).radius(rad2); // In meters
-
-		// Get back the mutable Circle
-		Circle circle = map.addCircle(circleOptions);
-
-		showCurrentLoc();
-	}
-
-	public void showCurrentLoc() {
-		Location loc = mLocationClient.getLastLocation();
-		ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
-		map.addMarker(new MarkerOptions().position(ltlng).title("You"));
 	}
 
 	public void MockingJay() {
@@ -304,8 +272,7 @@ public class MainActivity extends FragmentActivity implements
 				loc.getLatitude(), loc.getLongitude());
 		ProjectionPoint p = new ProjectionPoint();
 		ProjectionPoint.Point center = new ProjectionPoint.Point(lati2, longi2);
-		ProjectionPoint.Point newloc = p.getCircleProjectedPointIntersection(
-				originallocation, center, rad2);
+		ProjectionPoint.Point newloc = p.getCircleProjectedPointIntersection(originallocation, center, rad2);
 		mLocationClient.setMockMode(true);
 
 		Location newLocation = new Location(MainActivity.PROVIDER);
@@ -324,8 +291,46 @@ public class MainActivity extends FragmentActivity implements
 					.elapsedRealtimeNanos());
 		}
 		mLocationClient.setMockLocation(newLocation);
+		
 		alertBox("Mocked !!");
+		
+		showCurrentLoc();
 	}
+	
+	// MOCK FUNCTIONS
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+		// TODO Auto-generated method stub
+		mLocationClient.setMockMode(false);
+
+		onRegisterClicked();
+
+		// Instantiates a new CircleOptions object and defines the center and
+		// radius
+		CircleOptions circleOptions = new CircleOptions().center(
+				new LatLng(lati2, longi2)).radius(rad2); // In meters
+
+		// Get back the mutable Circle
+		Circle circle = map.addCircle(circleOptions);
+
+		showCurrentLoc();
+	}
+
+	public void showCurrentLoc() {
+		Location loc = mLocationClient.getLastLocation();
+		ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
+		map.addMarker(new MarkerOptions().position(ltlng).title("You"));
+
+		map.moveCamera(CameraUpdateFactory.newLatLng(ltlng));
+	}
+
+
 
 	@Override
 	public void onDisconnected() {
@@ -489,8 +494,9 @@ public class MainActivity extends FragmentActivity implements
 
 					// Restart the process of adding the current geofences
 					mGeofenceRequester.addGeofences(mCurrentGeofences);
-
+					
 					// If the request was to remove geofences
+					
 				} else if (GeofenceUtils.REQUEST_TYPE.REMOVE == mRequestType) {
 
 					// Toggle the removal flag and send a new removal request
@@ -569,7 +575,7 @@ public class MainActivity extends FragmentActivity implements
 					GeofenceUtils.ACTION_GEOFENCE_TRANSITION)) {
 
 				handleGeofenceTransition(context, intent);
-
+				
 				// The Intent contained an invalid action
 			} else {
 				Log.e(GeofenceUtils.APPTAG,
@@ -606,6 +612,12 @@ public class MainActivity extends FragmentActivity implements
 			 * code here. The current design of the app uses a notification to
 			 * inform the user that a transition has occurred.
 			 */
+			 int transition = mLocationClient.getGeofenceTransition(intent);
+//			 if (transition == Geofence.GEOFENCE_TRANSITION_ENTER)
+				 MockingJay();
+				 alertBox(""+transition);
+//			 else
+//				 mLocationClient.setMockMode(false);
 		}
 
 		/**
