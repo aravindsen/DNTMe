@@ -3,7 +3,7 @@ package com.example.dntmoi;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
+import com.example.dntmoi.*;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -37,6 +37,8 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -52,6 +54,14 @@ public class MainActivity extends FragmentActivity implements
 	private Location mCurrentLocation;
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	LocationManager lm;
+
+	// HOME
+	Double lati2 = 40.764746, longi2 = -111.857907;
+	Float rad2 = (float) 1000.0;
+
+	// COLLEGE
+	Double lati1 = 40.767599, longi1 = -111.843995;
+	Float rad1 = (float) 1000.0;
 
 	ConnectionResult connectionResult;
 
@@ -270,23 +280,41 @@ public class MainActivity extends FragmentActivity implements
 		// MockingJay();
 
 		onRegisterClicked();
+
+		// Instantiates a new CircleOptions object and defines the center and
+		// radius
+		CircleOptions circleOptions = new CircleOptions().center(
+				new LatLng(lati2, longi2)).radius(rad2); // In meters
+
+		// Get back the mutable Circle
+		Circle circle = map.addCircle(circleOptions);
+
 		showCurrentLoc();
 	}
 
 	public void showCurrentLoc() {
 		Location loc = mLocationClient.getLastLocation();
 		ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
-		map.addMarker(new MarkerOptions().position(ltlng)
-				.title("You"));
+		map.addMarker(new MarkerOptions().position(ltlng).title("You"));
 	}
 
 	public void MockingJay() {
+		Location loc = mLocationClient.getLastLocation();
+		ProjectionPoint.Point originallocation = new ProjectionPoint.Point(
+				loc.getLatitude(), loc.getLongitude());
+		ProjectionPoint p = new ProjectionPoint();
+		ProjectionPoint.Point center = new ProjectionPoint.Point(lati2, longi2);
+		ProjectionPoint.Point newloc = p.getCircleProjectedPointIntersection(
+				originallocation, center, rad2);
 		mLocationClient.setMockMode(true);
+
 		Location newLocation = new Location(MainActivity.PROVIDER);
-		double latitude = 21, longitude = 78;
+		// double latitude = 21, longitude = 78;
 		float accuracy = 3.0f;
-		newLocation.setLatitude(latitude);
-		newLocation.setLongitude(longitude);
+		// newLocation.setLatitude(latitude);
+		// newLocation.setLongitude(longitude);
+		newLocation.setLatitude(newloc.getLat());
+		newLocation.setLongitude(newloc.getLong());
 		newLocation.setAccuracy(accuracy);
 		newLocation.setTime(System.currentTimeMillis());
 
@@ -313,17 +341,8 @@ public class MainActivity extends FragmentActivity implements
 			map = ((SupportMapFragment) getSupportFragmentManager()
 					.findFragmentById(R.id.map_frag)).getMap();
 
-			if (map != null) {
-
-			}
-
 			map.setMyLocationEnabled(true);
-			for (int i = 60; i < 70; i++) {
-				ltlng = new LatLng(i, i + 30);
 
-				// map.addMarker(new
-				// MarkerOptions().position(ltlng).title("Hello world:" + i));
-			}
 		}
 	}
 
@@ -393,9 +412,6 @@ public class MainActivity extends FragmentActivity implements
 		 * Create a version of geofence 1 that is "flattened" into individual
 		 * fields. This allows it to be stored in SharedPreferences.
 		 */
-		// COLLEGE
-		Double lati1 = 40.767599, longi1 = -111.843995;
-		Float rad1 = (float) 1000.0;
 
 		mUIGeofence1 = new SimpleGeofence("1",
 		// Get latitude, longitude, and radius from the UI
@@ -412,9 +428,7 @@ public class MainActivity extends FragmentActivity implements
 		 * Create a version of geofence 2 that is "flattened" into individual
 		 * fields. This allows it to be stored in SharedPreferences.
 		 */
-		// HOME
-		Double lati2 = 40.764746, longi2 = -111.857907;
-		Float rad2 = (float) 1000.0;
+
 		mUIGeofence2 = new SimpleGeofence("2",
 		// Get latitude, longitude, and radius from the UI
 				lati2, longi2, rad2,
