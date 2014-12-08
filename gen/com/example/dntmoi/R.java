@@ -411,8 +411,8 @@ containing a value of this type.
     public static final class id {
         public static final int action_settings=0x7f070017;
         public static final int book_now=0x7f070010;
-        public static final int buttonreload1=0x7f070015;
-        public static final int buttonreload2=0x7f070016;
+        public static final int buttonreload1=0x7f070016;
+        public static final int buttonreload2=0x7f070015;
         public static final int buyButton=0x7f07000a;
         public static final int buy_now=0x7f07000f;
         public static final int buy_with_google=0x7f07000e;

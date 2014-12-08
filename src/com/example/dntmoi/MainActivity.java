@@ -61,14 +61,14 @@ public class MainActivity extends FragmentActivity implements
 
 	double ratio = 0.0002645833333333 * 13;
 	// HOME
-	Double lati2 = 40.764746, longi2 = -111.857907;
-	Float rad2 = (float) 1000.0;
-	double rad2inkms = rad2/1000;//0.0002645833333333;// rad2*ratio;
-
-	// COLLEGE
-	Double lati1 = 40.767599, longi1 = -111.843995;
+	double lati1 = 40.764746, longi1 = -111.857907;
 	Float rad1 = (float) 1000.0;
-	double rad1inkms = rad1 * ratio;
+	double rad1inkms = rad1/1000;//0.0002645833333333;// rad2*ratio;
+
+	// COLLEGE - used
+	double lati2 = 40.767599, longi2 = -111.843995;
+	Float rad2 = (float) 1000.0;
+	double rad2inkms = rad2/1000;
 
 	ConnectionResult connectionResult;
 
@@ -214,11 +214,7 @@ public class MainActivity extends FragmentActivity implements
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				// map.clear();
-				Location loc = mLocationClient.getLastLocation();
-				ltlng = new LatLng(loc.getLatitude(), loc.getLongitude());
-				map.addMarker(new MarkerOptions().position(ltlng).title(
-						"Present location"));
+				mLocationClient.setMockMode(false);
 			}
 
 		});
